@@ -5,13 +5,13 @@
 # Usage ./replicate_results.sh <DATASET-NAME> <THREAD-ID> <JE>
 ## where <DATASET-NAME>: MNIST, CIFAR, CUB, AWA 
 
-DATASET=$1
-THREAD=$2
+DATASET=CIFAR
+THREAD=3
 JE=$3
 OPTIM='SGD'
 BATCH_SIZE=10
 if [ $DATASET = "MNIST" ]; then
-    NUM_RUNS=5
+    NUM_RUNS=1
     if [ $THREAD = 1 ]; then
         IMP_METHODS=( 'VAN' 'EWC' 'PI' )
         LRS=(0.03 0.03 0.1)
@@ -21,9 +21,9 @@ if [ $DATASET = "MNIST" ]; then
         LRS=(0.1 0.1)
         LAMDAS=(0.1 1)
     elif [ $THREAD = 3 ]; then
-        IMP_METHODS=( 'PNN' 'A-GEM' )
-        LRS=(0.1 0.1)
-        LAMDAS=(0 0)
+        IMP_METHODS=( 'PNN' )
+        LRS=(0.1)
+        LAMDAS=(0)
     fi
     ARCH='FC-S'
     RESULTS_DIR='results/mnist'
@@ -38,7 +38,7 @@ if [ $DATASET = "MNIST" ]; then
         python ./fc_permute_mnist.py --train-single-epoch --arch $ARCH --num-runs $NUM_RUNS --batch-size $BATCH_SIZE --optim $OPTIM --learning-rate $lr --imp-method $imp_method --synap-stgth $lam --log-dir $RESULTS_DIR
     done
 elif [ $DATASET = "CIFAR" ]; then
-    NUM_RUNS=5
+    NUM_RUNS=1
     if [ $THREAD = 1 ]; then
         IMP_METHODS=( 'VAN' 'EWC' 'PI' )
         LRS=(0.01 0.03 0.01)
@@ -48,9 +48,9 @@ elif [ $DATASET = "CIFAR" ]; then
         LRS=(0.03 0.03)
         LAMDAS=(0.1 1)
     elif [ $THREAD = 3 ]; then
-        IMP_METHODS=( 'PNN' 'A-GEM' )
-        LRS=(0.03 0.03)
-        LAMDAS=(0 0)
+        IMP_METHODS=('PNN' )
+        LRS=(0.03)
+        LAMDAS=(0)
     fi
     ARCH='RESNET-S'
     RESULTS_DIR='results/cifar'

@@ -59,7 +59,7 @@ VISUALIZE_IMPORTANCE_MEASURE = False
 MEASURE_CONVERGENCE_AFTER = 0.9
 EPS_MEM_BATCH_SIZE = 256
 DEBUG_EPISODIC_MEMORY = False
-K_FOR_CROSS_VAL = 3
+K_FOR_CROSS_VAL = 0
 TIME_MY_METHOD = False
 COUNT_VIOLATONS = False
 MEASURE_PERF_ON_EPS_MEMORY = False
@@ -70,7 +70,7 @@ RESNET18_CIFAR10_CHECKPOINT = './resnet-18-pretrained-cifar10/model.ckpt-19999'
 ## Evaluation options
 
 ## Task split
-NUM_TASKS = 20
+NUM_TASKS = 10
 MULTI_TASK = False
 
 
@@ -526,7 +526,8 @@ def train_task_sequence(model, sess, datasets, args):
 
             if args.train_single_epoch and not args.cross_validate_mode: 
                 fbatch = test_task_sequence(model, sess, datasets[0]['test'], task_labels, task)
-                print('Task: {}, Acc: {}'.format(task, fbatch))
+                print('Task: {},** Acc: {}'.format(task, fbatch))
+                print('Average accuracy after Task: {} is Acc: {}'.format(task, np.sum(fbatch)/(task+1)))
                 ftask.append(fbatch)
                 ftask = np.array(ftask)
                 if model.imp_method == 'PNN':

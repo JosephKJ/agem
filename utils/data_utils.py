@@ -21,8 +21,10 @@ import zipfile
 import random
 import cv2
 
-#IMG_MEAN = np.array((104.00698793,116.66876762,122.67891434), dtype=np.float32)
-IMG_MEAN = np.array((103.94,116.78,123.68), dtype=np.float32)
+# IMG_MEAN = np.array((104.00698793,116.66876762,122.67891434), dtype=np.float32)
+IMG_MEAN = np.array((103.94, 116.78, 123.68), dtype=np.float32)
+
+
 ############################################################
 ### Data augmentation utils ################################
 ############################################################
@@ -50,9 +52,11 @@ def random_crop_and_pad_image(images, crop_h, crop_w):
       crop_w: Width of cropped segment.
     """
     image_shape = tf.shape(images)
-    image_pad = tf.image.pad_to_bounding_box(images, 0, 0, tf.maximum(crop_h, image_shape[1]), tf.maximum(crop_w, image_shape[2]))
-    img_crop = tf.map_fn(lambda img: tf.random_crop(img, [crop_h,crop_w,3]), image_pad)
+    image_pad = tf.image.pad_to_bounding_box(images, 0, 0, tf.maximum(crop_h, image_shape[1]),
+                                             tf.maximum(crop_w, image_shape[2]))
+    img_crop = tf.map_fn(lambda img: tf.random_crop(img, [crop_h, crop_w, 3]), image_pad)
     return img_crop
+
 
 def random_horizontal_flip(x):
     """
@@ -64,9 +68,10 @@ def random_horizontal_flip(x):
     """
     # Define random horizontal flip
     flips = [(slice(None, None, None), slice(None, None, random.choice([-1, None])), slice(None, None, None))
-            for _ in xrange(x.shape[0])]
+             for _ in xrange(x.shape[0])]
     random_flipped = np.array([img[flip] for img, flip in zip(x, flips)])
     return random_flipped
+
 
 ############################################################
 ### AWA dataset utils #####################################
@@ -90,7 +95,7 @@ def _AWA_read_img_from_file(data_dir, file_name, img_height, img_width):
             img_file = data_dir.rstrip('\/') + '/' + img_name
             img = cv2.imread(img_file).astype(np.float32)
             # HWC -> WHC, compatible with caffe weights
-            #img = np.transpose(img, [1, 0, 2])
+            # img = np.transpose(img, [1, 0, 2])
             img = cv2.resize(img, (img_width, img_height))
             # Convert RGB to BGR
             img_r, img_g, img_b = np.split(img, 3, axis=2)
@@ -103,7 +108,7 @@ def _AWA_read_img_from_file(data_dir, file_name, img_height, img_width):
             count += 1
 
             if count % 1000 == 0:
-                print 'Finish reading {:07d}'.format(count)
+                print('Finish reading {:07d}').format(count)
 
     # Convert the labels to one-hot
     y = dense_to_one_hot(np.array(labels))
@@ -119,7 +124,7 @@ def _AWA_get_data(data_dir, train_list_file, val_list_file, test_list_file, img_
     dataset['validation'] = []
     dataset['test'] = []
 
-    num_val_img = 0   # you can change the number of validation images here TODO: Pass this as argument
+    num_val_img = 0  # you can change the number of validation images here TODO: Pass this as argument
 
     train_img = []
     train_label = []
@@ -130,20 +135,21 @@ def _AWA_get_data(data_dir, train_list_file, val_list_file, test_list_file, img_
 
     # Read train, validation and test files
     train_img, train_label = _AWA_read_img_from_file(data_dir, train_list_file, img_height, img_width)
-    #validation_img, validation_label = _AWA_read_img_from_file(data_dir, val_list_file, img_height, img_width)
+    # validation_img, validation_label = _AWA_read_img_from_file(data_dir, val_list_file, img_height, img_width)
     test_img, test_label = _AWA_read_img_from_file(data_dir, test_list_file, img_height, img_width)
 
     dataset['train'].append(train_img)
     dataset['train'].append(train_label)
-    #dataset['validation'].append(validation_img)
-    #dataset['validation'].append(validation_label)
+    # dataset['validation'].append(validation_img)
+    # dataset['validation'].append(validation_label)
     dataset['test'].append(test_img)
     dataset['test'].append(test_label)
 
     return dataset
 
 
-def construct_split_awa(task_labels, data_dir, train_list_file, val_list_file, test_list_file, img_height, img_width, attr_file=None):
+def construct_split_awa(task_labels, data_dir, train_list_file, val_list_file, test_list_file, img_height, img_width,
+                        attr_file=None):
     """
     Construct Split AWA dataset
 
@@ -170,7 +176,7 @@ def construct_split_awa(task_labels, data_dir, train_list_file, val_list_file, t
     datasets = []
 
     # Data splits
-    #sets = ["train", "validation", "test"]
+    # sets = ["train", "validation", "test"]
     sets = ["train", "test"]
 
     for task in task_labels:
@@ -183,11 +189,12 @@ def construct_split_awa(task_labels, data_dir, train_list_file, val_list_file, t
 
             for cls in task:
                 if count == 0:
-                    class_indices = np.squeeze(global_class_indices[global_class_indices[:,1] ==
-                                                                    cls][:,np.array([True, False])])
+                    class_indices = np.squeeze(global_class_indices[global_class_indices[:, 1] ==
+                                                                    cls][:, np.array([True, False])])
                 else:
-                    class_indices = np.append(class_indices, np.squeeze(global_class_indices[global_class_indices[:,1] ==\
-                                                                                 cls][:,np.array([True, False])]))
+                    class_indices = np.append(class_indices,
+                                              np.squeeze(global_class_indices[global_class_indices[:, 1] == \
+                                                                              cls][:, np.array([True, False])]))
 
                 count += 1
 
@@ -195,30 +202,30 @@ def construct_split_awa(task_labels, data_dir, train_list_file, val_list_file, t
 
             if set_name == "train":
                 train = {
-                    'images':deepcopy(this_set[0][class_indices, :]),
-                    'labels':deepcopy(this_set[1][class_indices, :]),
+                    'images': deepcopy(this_set[0][class_indices, :]),
+                    'labels': deepcopy(this_set[1][class_indices, :]),
                 }
             elif set_name == "validation":
                 validation = {
-                    'images':deepcopy(this_set[0][class_indices, :]),
-                    'labels':deepcopy(this_set[1][class_indices, :]),
+                    'images': deepcopy(this_set[0][class_indices, :]),
+                    'labels': deepcopy(this_set[1][class_indices, :]),
                 }
             elif set_name == "test":
                 test = {
-                    'images':deepcopy(this_set[0][class_indices, :]),
-                    'labels':deepcopy(this_set[1][class_indices, :]),
+                    'images': deepcopy(this_set[0][class_indices, :]),
+                    'labels': deepcopy(this_set[1][class_indices, :]),
                 }
 
         awa = {
             'train': train,
-            #'validation': validation,
+            # 'validation': validation,
             'test': test,
         }
 
         datasets.append(awa)
 
     if attr_file:
-        return datasets, awa_attr 
+        return datasets, awa_attr
     else:
         return datasets
 
@@ -245,7 +252,7 @@ def _CUB_read_img_from_file(data_dir, file_name, img_height, img_width):
             img_file = data_dir.rstrip('\/') + '/' + img_name
             img = cv2.imread(img_file).astype(np.float32)
             # HWC -> WHC, compatible with caffe weights
-            #img = np.transpose(img, [1, 0, 2])
+            # img = np.transpose(img, [1, 0, 2])
             img = cv2.resize(img, (img_width, img_height))
             # Convert RGB to BGR
             img_r, img_g, img_b = np.split(img, 3, axis=2)
@@ -258,7 +265,7 @@ def _CUB_read_img_from_file(data_dir, file_name, img_height, img_width):
             count += 1
 
             if count % 1000 == 0:
-                print 'Finish reading {:07d}'.format(count)
+                print('Finish reading {:07d}').format(count)
 
     # Convert the labels to one-hot
     y = dense_to_one_hot(np.array(labels))
@@ -273,7 +280,7 @@ def _CUB_get_data(data_dir, train_list_file, test_list_file, img_height, img_wid
     dataset['train'] = []
     dataset['test'] = []
 
-    num_val_img = 0   # you can change the number of validation images here TODO: Pass this as argument
+    num_val_img = 0  # you can change the number of validation images here TODO: Pass this as argument
 
     train_img = []
     train_label = []
@@ -330,11 +337,12 @@ def construct_split_cub(task_labels, data_dir, train_list_file, test_list_file, 
 
             for cls in task:
                 if count == 0:
-                    class_indices = np.squeeze(global_class_indices[global_class_indices[:,1] ==
-                                                                    cls][:,np.array([True, False])])
+                    class_indices = np.squeeze(global_class_indices[global_class_indices[:, 1] ==
+                                                                    cls][:, np.array([True, False])])
                 else:
-                    class_indices = np.append(class_indices, np.squeeze(global_class_indices[global_class_indices[:,1] ==\
-                                                                                 cls][:,np.array([True, False])]))
+                    class_indices = np.append(class_indices,
+                                              np.squeeze(global_class_indices[global_class_indices[:, 1] == \
+                                                                              cls][:, np.array([True, False])]))
 
                 count += 1
 
@@ -342,13 +350,13 @@ def construct_split_cub(task_labels, data_dir, train_list_file, test_list_file, 
 
             if set_name == "train":
                 train = {
-                    'images':deepcopy(this_set[0][class_indices, :]),
-                    'labels':deepcopy(this_set[1][class_indices, :]),
+                    'images': deepcopy(this_set[0][class_indices, :]),
+                    'labels': deepcopy(this_set[1][class_indices, :]),
                 }
             elif set_name == "test":
                 test = {
-                    'images':deepcopy(this_set[0][class_indices, :]),
-                    'labels':deepcopy(this_set[1][class_indices, :]),
+                    'images': deepcopy(this_set[0][class_indices, :]),
+                    'labels': deepcopy(this_set[1][class_indices, :]),
                 }
 
         cub = {
@@ -359,9 +367,10 @@ def construct_split_cub(task_labels, data_dir, train_list_file, test_list_file, 
         datasets.append(cub)
 
     if attr_file:
-        return datasets, cub_attr 
+        return datasets, cub_attr
     else:
         return datasets
+
 
 ############################################################
 ### CIFAR download utils ###################################
@@ -370,6 +379,7 @@ CIFAR_10_URL = "http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
 CIFAR_100_URL = "http://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz"
 CIFAR_10_DIR = "/cifar_10"
 CIFAR_100_DIR = "/cifar_100"
+
 
 def construct_split_cifar(task_labels, is_cifar_100=True):
     """
@@ -401,11 +411,12 @@ def construct_split_cifar(task_labels, is_cifar_100=True):
 
             for cls in task:
                 if count == 0:
-                    class_indices = np.squeeze(global_class_indices[global_class_indices[:,1] ==
-                                                                    cls][:,np.array([True, False])])
+                    class_indices = np.squeeze(global_class_indices[global_class_indices[:, 1] ==
+                                                                    cls][:, np.array([True, False])])
                 else:
-                    class_indices = np.append(class_indices, np.squeeze(global_class_indices[global_class_indices[:,1] ==\
-                                                                                 cls][:,np.array([True, False])]))
+                    class_indices = np.append(class_indices,
+                                              np.squeeze(global_class_indices[global_class_indices[:, 1] == \
+                                                                              cls][:, np.array([True, False])]))
 
                 count += 1
 
@@ -413,23 +424,23 @@ def construct_split_cifar(task_labels, is_cifar_100=True):
 
             if set_name == "train":
                 train = {
-                    'images':deepcopy(this_set[0][class_indices, :]),
-                    'labels':deepcopy(this_set[1][class_indices, :]),
+                    'images': deepcopy(this_set[0][class_indices, :]),
+                    'labels': deepcopy(this_set[1][class_indices, :]),
                 }
             elif set_name == "validation":
                 validation = {
-                    'images':deepcopy(this_set[0][class_indices, :]),
-                    'labels':deepcopy(this_set[1][class_indices, :]),
+                    'images': deepcopy(this_set[0][class_indices, :]),
+                    'labels': deepcopy(this_set[1][class_indices, :]),
                 }
             elif set_name == "test":
                 test = {
-                    'images':deepcopy(this_set[0][class_indices, :]),
-                    'labels':deepcopy(this_set[1][class_indices, :]),
+                    'images': deepcopy(this_set[0][class_indices, :]),
+                    'labels': deepcopy(this_set[1][class_indices, :]),
                 }
 
         cifar = {
             'train': train,
-            'validation': validation, 
+            'validation': validation,
             'test': test,
         }
 
@@ -473,9 +484,9 @@ def _get_cifar(data_dir, is_cifar_100):
     if is_cifar_100:
         # Load the training data of CIFAR-100
         f = open(data_dir + CIFAR_100_DIR + '/train', 'rb')
-        datadict = pickle.load(f)
+        datadict = pickle.load(f, encoding='latin1')
         f.close()
-    
+
         _X = datadict['data']
         _Y = np.array(datadict['fine_labels'])
         _Y = dense_to_one_hot(_Y, num_classes=100)
@@ -483,7 +494,7 @@ def _get_cifar(data_dir, is_cifar_100):
         _X = np.array(_X, dtype=float) / 255.0
         _X = _X.reshape([-1, 3, 32, 32])
         _X = _X.transpose([0, 2, 3, 1])
-    
+
         # Compute the data mean for normalization
         x_train_mean = np.mean(_X, axis=0)
 
@@ -493,30 +504,30 @@ def _get_cifar(data_dir, is_cifar_100):
         x_validation = _X[40000:]
         y_validation = _Y[40000:]
     else:
-    	# Load all the training batches of the CIFAR-10
-    	for i in range(5):
+        # Load all the training batches of the CIFAR-10
+        for i in range(5):
             f = open(data_dir + CIFAR_10_DIR + '/data_batch_' + str(i + 1), 'rb')
-            datadict = pickle.load(f)
+            datadict = pickle.load(f, encoding='latin1')
             f.close()
-            
+
             _X = datadict['data']
             _Y = np.array(datadict['labels'])
             _Y = dense_to_one_hot(_Y, num_classes=10)
-            
+
             _X = np.array(_X, dtype=float) / 255.0
             _X = _X.reshape([-1, 3, 32, 32])
             _X = _X.transpose([0, 2, 3, 1])
-            
+
             if x_train is None:
                 x_train = _X
                 y_train = _Y
             else:
-            	x_train = np.concatenate((x_train, _X), axis=0)
-            	y_train = np.concatenate((y_train, _Y), axis=0)
-    
+                x_train = np.concatenate((x_train, _X), axis=0)
+                y_train = np.concatenate((y_train, _Y), axis=0)
+
         # Compute the data mean for normalization
         x_train_mean = np.mean(x_train, axis=0)
-        x_validation = x_train[:40000] # We don't use validation set with CIFAR-10
+        x_validation = x_train[:40000]  # We don't use validation set with CIFAR-10
         y_validation = y_train[40000:]
 
     # Normalize the train and validation sets
@@ -534,9 +545,9 @@ def _get_cifar(data_dir, is_cifar_100):
     if is_cifar_100:
         # Load the test batch of CIFAR-100
         f = open(data_dir + CIFAR_100_DIR + '/test', 'rb')
-        datadict = pickle.load(f)
+        datadict = pickle.load(f, encoding='latin1')
         f.close()
-    
+
         _X = datadict['data']
         _Y = np.array(datadict['fine_labels'])
         _Y = dense_to_one_hot(_Y, num_classes=100)
@@ -633,15 +644,16 @@ def reformat_mnist(datasets):
     """
     Routine to Reformat the mnist dataset into a 3d tensor
     """
-    image_size = 28 # Height of MNIST dataset
-    num_channels = 1 # Gray scale
+    image_size = 28  # Height of MNIST dataset
+    num_channels = 1  # Gray scale
     for i in range(len(datasets)):
         sets = ["train", "validation", "test"]
         for set_name in sets:
-            datasets[i]['%s'%set_name]['images'] = datasets[i]['%s'%set_name]['images'].reshape\
-            ((-1, image_size, image_size, num_channels)).astype(np.float32)
+            datasets[i]['%s' % set_name]['images'] = datasets[i]['%s' % set_name]['images'].reshape \
+                ((-1, image_size, image_size, num_channels)).astype(np.float32)
 
     return datasets
+
 
 def construct_permute_mnist(num_tasks):
     """
@@ -658,27 +670,27 @@ def construct_permute_mnist(num_tasks):
     datasets = []
 
     for i in range(num_tasks):
-        perm_inds = range(mnist.train.images.shape[1])
+        perm_inds = list(range(mnist.train.images.shape[1]))
         np.random.shuffle(perm_inds)
         copied_mnist = deepcopy(mnist)
         sets = ["train", "validation", "test"]
         for set_name in sets:
-            this_set = getattr(copied_mnist, set_name) # shallow copy
-            this_set._images = np.transpose(np.array([this_set.images[:,c] for c in perm_inds]))
+            this_set = getattr(copied_mnist, set_name)  # shallow copy
+            this_set._images = np.transpose(np.array([this_set.images[:, c] for c in perm_inds]))
             if set_name == "train":
-                train = { 
-                    'images':this_set._images,
-                    'labels':this_set.labels,
+                train = {
+                    'images': this_set._images,
+                    'labels': this_set.labels,
                 }
             elif set_name == "validation":
                 validation = {
-                    'images':this_set._images,
-                    'labels':this_set.labels,
+                    'images': this_set._images,
+                    'labels': this_set.labels,
                 }
             elif set_name == "test":
                 test = {
-                    'images':this_set._images,
-                    'labels':this_set.labels,
+                    'images': this_set._images,
+                    'labels': this_set.labels,
                 }
         dataset = {
             'train': train,
@@ -689,6 +701,7 @@ def construct_permute_mnist(num_tasks):
         datasets.append(dataset)
 
     return datasets
+
 
 def construct_split_mnist(task_labels):
     """
@@ -718,29 +731,30 @@ def construct_split_mnist(task_labels):
 
             for cls in task:
                 if count == 0:
-                    class_indices = np.squeeze(global_class_indices[global_class_indices[:,1] ==\
-                                                                    cls][:,np.array([True, False])])
+                    class_indices = np.squeeze(global_class_indices[global_class_indices[:, 1] == \
+                                                                    cls][:, np.array([True, False])])
                 else:
-                    class_indices = np.append(class_indices, np.squeeze(global_class_indices[global_class_indices[:,1] ==\
-                                                                                             cls][:,np.array([True, False])]))
+                    class_indices = np.append(class_indices,
+                                              np.squeeze(global_class_indices[global_class_indices[:, 1] == \
+                                                                              cls][:, np.array([True, False])]))
                 count += 1
 
             class_indices = np.sort(class_indices, axis=None)
 
             if set_name == "train":
                 train = {
-                    'images':deepcopy(mnist.train.images[class_indices, :]),
-                    'labels':deepcopy(mnist.train.labels[class_indices, :]),
+                    'images': deepcopy(mnist.train.images[class_indices, :]),
+                    'labels': deepcopy(mnist.train.labels[class_indices, :]),
                 }
             elif set_name == "validation":
                 validation = {
-                    'images':deepcopy(mnist.validation.images[class_indices, :]),
-                    'labels':deepcopy(mnist.validation.labels[class_indices, :]),
+                    'images': deepcopy(mnist.validation.images[class_indices, :]),
+                    'labels': deepcopy(mnist.validation.labels[class_indices, :]),
                 }
             elif set_name == "test":
                 test = {
-                    'images':deepcopy(mnist.test.images[class_indices, :]),
-                    'labels':deepcopy(mnist.test.labels[class_indices, :]),
+                    'images': deepcopy(mnist.test.images[class_indices, :]),
+                    'labels': deepcopy(mnist.test.labels[class_indices, :]),
                 }
 
         mnist2 = {
@@ -752,6 +766,7 @@ def construct_split_mnist(task_labels):
         datasets.append(mnist2)
 
     return datasets
+
 
 ###################################################
 ###### ImageNet Utils #############################
@@ -784,11 +799,12 @@ def construct_split_imagenet(task_labels, data_dir):
 
             for cls in task:
                 if count == 0:
-                    class_indices = np.squeeze(global_class_indices[global_class_indices[:,1] ==
-                                                                    cls][:,np.array([True, False])])
+                    class_indices = np.squeeze(global_class_indices[global_class_indices[:, 1] ==
+                                                                    cls][:, np.array([True, False])])
                 else:
-                    class_indices = np.append(class_indices, np.squeeze(global_class_indices[global_class_indices[:,1] ==\
-                                                                                 cls][:,np.array([True, False])]))
+                    class_indices = np.append(class_indices,
+                                              np.squeeze(global_class_indices[global_class_indices[:, 1] == \
+                                                                              cls][:, np.array([True, False])]))
 
                 count += 1
 
@@ -796,13 +812,13 @@ def construct_split_imagenet(task_labels, data_dir):
 
             if set_name == "train":
                 train = {
-                    'images':deepcopy(this_set[0][class_indices, :]),
-                    'labels':deepcopy(this_set[1][class_indices, :]),
+                    'images': deepcopy(this_set[0][class_indices, :]),
+                    'labels': deepcopy(this_set[1][class_indices, :]),
                 }
             elif set_name == "test":
                 test = {
-                    'images':deepcopy(this_set[0][class_indices, :]),
-                    'labels':deepcopy(this_set[1][class_indices, :]),
+                    'images': deepcopy(this_set[0][class_indices, :]),
+                    'labels': deepcopy(this_set[1][class_indices, :]),
                 }
 
         imagenet = {
@@ -813,6 +829,7 @@ def construct_split_imagenet(task_labels, data_dir):
         datasets.append(imagenet)
 
     return datasets
+
 
 def _load_imagenet(data_dir):
     """
@@ -852,7 +869,7 @@ def _load_imagenet(data_dir):
         _Y = dense_to_one_hot(_Y)
 
         # Normalize the images
-        _X = np.array(_X, dtype=float)/ 255.0
+        _X = np.array(_X, dtype=float) / 255.0
         _X = _X.reshape([-1, 224, 224, 3])
 
         if x_train is None:
@@ -878,7 +895,7 @@ def _load_imagenet(data_dir):
         _Y = dense_to_one_hot(_Y)
 
         # Normalize the images
-        _X = np.array(_X, dtype=float)/ 255.0
+        _X = np.array(_X, dtype=float) / 255.0
         _X = _X.reshape([-1, 224, 224, 3])
 
         if x_test is None:
@@ -890,6 +907,5 @@ def _load_imagenet(data_dir):
 
     dataset['test'].append(x_test)
     dataset['test'].append(y_test)
-
 
     return dataset

@@ -31,7 +31,7 @@ from model import Model
 ###############################################################
 
 ## Training Options
-NUM_RUNS = 10           # Number of experiments to average over
+NUM_RUNS = 1           # Number of experiments to average over
 TRAIN_ITERS = 5000      # Number of training iterations per task
 BATCH_SIZE = 16
 LEARNING_RATE = 1e-3    
@@ -58,7 +58,7 @@ TOTAL_CLASSES = 10          # Total number of classes in the dataset
 EPS_MEM_BATCH_SIZE = 256
 DEBUG_EPISODIC_MEMORY = False
 USE_GPU = True
-K_FOR_CROSS_VAL = 3
+K_FOR_CROSS_VAL = 0
 TIME_MY_METHOD = False
 COUNT_VIOLATIONS = False
 MEASURE_PERF_ON_EPS_MEMORY = False
@@ -379,6 +379,11 @@ def train_task_sequence(model, sess, args):
 
             if args.train_single_epoch and not args.cross_validate_mode: 
                 fbatch = test_task_sequence(model, sess, datasets, False)
+                print('Task: {},** Acc: {}'.format(task, fbatch))
+                print('Task: {},** Acc: {}'.format(task, fbatch[0:task+1]))
+                print('Task: {},** Sum: {}'.format(task, np.sum(fbatch[0:task+1])))
+                print('Average accuracy after Task: {} is Acc: {}'.format(task, np.sum(fbatch[0:task+1])/(task+1)))
+
                 ftask.append(fbatch)
                 ftask = np.array(ftask)
             else:
